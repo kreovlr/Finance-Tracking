@@ -1,10 +1,10 @@
-# FinTrack
+# Finance Tracking
 
-FinTrack is a responsive personal finance dashboard for tracking income, expenses, budgets, recurring activity, and spending trends. It is built with React, Vite, Tailwind CSS, Chart.js, and Framer Motion.
+Finance Tracking is a responsive personal finance dashboard for tracking income, expenses, budgets, recurring activity, and spending trends. It is built with React, Vite, Tailwind CSS, Chart.js, and Framer Motion.
 
 ## Highlights
 
-- Protected login and registration flow with client-side validation
+- Protected login and registration flow with locally registered account validation
 - Persistent browser session, transactions, budgets, theme, and currency preferences
 - Create, edit, delete, categorize, filter, and export transactions as CSV
 - Monthly budget limits with progress indicators and overspending alerts
@@ -44,7 +44,7 @@ The current authentication and data storage are intentionally client-side for th
 
 ## Resume-ready description
 
-**FinTrack | React, Vite, Tailwind CSS, Chart.js**
+**Finance Tracking | React, Vite, Tailwind CSS, Chart.js**
 
 Built a responsive personal finance dashboard with protected routing, transaction CRUD workflows, monthly budget tracking, recurring transactions, chart date filters, overspending alerts, multi-currency formatting, CSV export, JSON backup/restore, dark mode, and mobile navigation. Persisted user preferences and finance data locally and designed the UI for both desktop and mobile use.
 

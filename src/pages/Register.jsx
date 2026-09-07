@@ -44,6 +44,7 @@ return (
 <div
 
 className="
+auth-shell
 min-h-screen
 w-screen
 bg-[#0a0a0a]
@@ -70,6 +71,7 @@ scale:1
 }}
 
 className="
+auth-panel
 w-full
 max-w-md
 bg-white/5
@@ -90,8 +92,8 @@ text-4xl
 font-bold
 text-center
 bg-gradient-to-r
-from-indigo-400
-to-purple-500
+from-purple-200
+to-purple-400
 bg-clip-text
 text-transparent
 "
@@ -125,6 +127,7 @@ value={form.name}
 onChange={(e) => setForm({ ...form, name: e.target.value })}
 
 className="
+auth-input
 w-full
 bg-black/40
 border
@@ -146,6 +149,7 @@ onChange={(e) => setForm({ ...form, email: e.target.value })}
 type="email"
 
 className="
+auth-input
 w-full
 bg-black/40
 border
@@ -167,6 +171,7 @@ onChange={(e) => setForm({ ...form, password: e.target.value })}
 type="password"
 
 className="
+auth-input
 w-full
 bg-black/40
 border
@@ -182,6 +187,7 @@ p-4
 <button
 
 className="
+rose-button
 w-full
 bg-indigo-600
 hover:bg-indigo-500

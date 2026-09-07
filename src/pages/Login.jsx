@@ -66,6 +66,7 @@ return (
 
 <div
 className="
+auth-shell
 min-h-screen
 w-screen
 bg-slate-50
@@ -127,6 +128,7 @@ y:0
 }}
 
 className="
+auth-panel
 w-full
 max-w-md
 bg-white
@@ -152,15 +154,15 @@ text-5xl
 font-bold
 text-center
 bg-gradient-to-r
-from-indigo-400
-to-purple-500
+from-purple-200
+to-purple-400
 bg-clip-text
 text-transparent
 "
 
 >
 
-FinTrack
+Finance Tracking
 
 </h1>
 
@@ -207,6 +209,7 @@ value={form.email}
 onChange={(e) => setForm({ ...form, email: e.target.value })}
 
 className="
+auth-input
 w-full
 bg-slate-50
 border
@@ -236,6 +239,7 @@ value={form.password}
 onChange={(e) => setForm({ ...form, password: e.target.value })}
 
 className="
+auth-input
 w-full
 bg-slate-50
 border
@@ -260,6 +264,7 @@ dark:text-white
 <button
 
 className="
+rose-button
 w-full
 bg-indigo-600
 hover:bg-indigo-500
