@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: #f5f7fb;
+  color: #172033;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+html.dark body {
+  background: #0a0a0a;
+  color: white;
+}
+
+* {
+  box-sizing: border-box;
+}
