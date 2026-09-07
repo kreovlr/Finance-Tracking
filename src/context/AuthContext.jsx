@@ -68,7 +68,7 @@ export function AuthProvider({ children }) {
     });
     if (error) {
       if (error.message === "Invalid login credentials") {
-        return "No matching Supabase account found. If you registered before Supabase was added, register again with this email.";
+        return "We couldn't find an account with those details. Check your email and password, or create an account first.";
       }
       if (error.message.toLowerCase().includes("email not confirmed")) {
         return "Confirm your email address first, then try logging in again.";
