@@ -23,12 +23,20 @@ export function AuthProvider({ children }) {
     }
 
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+    const recoveryCode = new URLSearchParams(window.location.search).get("code");
+    const restoreSession = async () => {
+      if (recoveryCode) {
+        await supabase.auth.exchangeCodeForSession(recoveryCode);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      const { data } = await supabase.auth.getSession();
       if (mounted) {
         setUser(getUserFromSession(data.session));
         setLoading(false);
       }
-    });
+    };
+    restoreSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(getUserFromSession(session));
@@ -109,8 +117,29 @@ export function AuthProvider({ children }) {
 
   async function updatePassword(password) {
     if (!supabase) return "Supabase is not configured yet.";
+    let { data: sessionData } = await supabase.auth.getSession();
+
+    if (!sessionData.session) {
+      const recoveryCode = new URLSearchParams(window.location.search).get("code");
+      if (recoveryCode) {
+        await supabase.auth.exchangeCodeForSession(recoveryCode);
+        ({ data: sessionData } = await supabase.auth.getSession());
+      }
+    }
+
+    if (!sessionData.session) {
+      return "This password-reset link is expired or has already been used. Request a new reset email.";
+    }
+
     const { error } = await supabase.auth.updateUser({ password });
-    return error?.message || null;
+    if (!error) return null;
+
+    const errorMessage = error.message.toLowerCase();
+    if (errorMessage.includes("same") || errorMessage.includes("different") || errorMessage.includes("old password")) {
+      return "Use a different password. This password was already used for this account.";
+    }
+
+    return error.message;
   }
 
   return (
