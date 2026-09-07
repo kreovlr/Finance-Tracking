@@ -1,65 +1,100 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
 
-function readStoredAccounts() {
-  const storedAccounts = window.localStorage.getItem("fintrack-accounts");
-  return storedAccounts ? JSON.parse(storedAccounts) : [];
-}
-
-function readStoredUser() {
-  const storedUser = window.localStorage.getItem("fintrack-user");
-  return storedUser ? JSON.parse(storedUser) : null;
+function getUserFromSession(session) {
+  if (!session?.user) return null;
+  return {
+    id: session.user.id,
+    name: session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+    email: session.user.email
+  };
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(readStoredUser);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
 
-  function login(email, password) {
+  useEffect(() => {
+    if (!supabase) {
+      return undefined;
+    }
+
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) {
+        setUser(getUserFromSession(data.session));
+        setLoading(false);
+      }
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(getUserFromSession(session));
+      setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  async function login(email, password) {
+    if (!isSupabaseConfigured) {
+      return "Supabase is not configured yet. Add the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.";
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail || password.length < 6) {
       return "Enter a valid email and a password with at least 6 characters.";
     }
 
-    const account = readStoredAccounts().find((item) => item.email === normalizedEmail);
-    if (!account || account.password !== password) {
-      return "No matching account found. Register first or check your details.";
+    const { error } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password
+    });
+    if (error) {
+      return error.message === "Invalid login credentials"
+        ? "No matching account found. Register first or check your details."
+        : error.message;
     }
-
-    const nextUser = { name: account.name, email: account.email };
-    window.localStorage.setItem("fintrack-user", JSON.stringify(nextUser));
-    setUser(nextUser);
     return null;
   }
 
-  function register(name, email, password) {
+  async function register(name, email, password) {
+    if (!isSupabaseConfigured) {
+      return "Supabase is not configured yet. Add the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.";
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
     const trimmedName = name.trim();
     if (!trimmedName || !normalizedEmail || password.length < 6) {
       return "Complete all fields. Passwords must be at least 6 characters.";
     }
 
-    const accounts = readStoredAccounts();
-    if (accounts.some((item) => item.email === normalizedEmail)) {
-      return "An account with this email already exists. Log in instead.";
+    const { data, error } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: { data: { name: trimmedName } }
+    });
+    if (error) {
+      return error.message;
     }
 
-    const account = { name: trimmedName, email: normalizedEmail, password };
-    window.localStorage.setItem("fintrack-accounts", JSON.stringify([...accounts, account]));
-    const nextUser = { name: account.name, email: account.email };
-    window.localStorage.setItem("fintrack-user", JSON.stringify(nextUser));
-    setUser(nextUser);
+    if (!data.session) {
+      return "Account created. Check your email to confirm your account, then log in.";
+    }
     return null;
   }
 
-  function logout() {
-    window.localStorage.removeItem("fintrack-user");
-    setUser(null);
+  async function logout() {
+    if (supabase) await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

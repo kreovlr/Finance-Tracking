@@ -4,8 +4,8 @@ Finance Tracking is a responsive personal finance dashboard for tracking income,
 
 ## Highlights
 
-- Protected login and registration flow with locally registered account validation
-- Persistent browser session, transactions, budgets, theme, and currency preferences
+- Supabase email/password authentication with persistent cross-device sessions
+- Per-user transactions, budgets, and currency preferences stored in PostgreSQL
 - Create, edit, delete, categorize, filter, and export transactions as CSV
 - Monthly budget limits with progress indicators and overspending alerts
 - Recurring income and expense tracking
@@ -29,6 +29,16 @@ npm run dev:phone
 
 Open the Network URL shown by Vite on the phone. Your computer firewall may need to allow Node.js on private networks.
 
+## Supabase setup
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open the Supabase SQL Editor and run [`supabase/schema.sql`](supabase/schema.sql).
+3. In Authentication > Providers, enable Email. Disable email confirmation for quick testing, or keep it enabled to require users to verify their email.
+4. Copy `.env.example` to `.env.local` and fill in the project URL and anon key from Project Settings > API.
+5. Add the same `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` values to the Vercel project environment variables.
+
+The frontend only uses the Supabase anon key. Never put a Supabase service-role key in `.env.local`, Vercel, or browser code.
+
 ## Build and deploy
 
 ```bash
@@ -38,20 +48,14 @@ npm run build
 
 The project is configured for Vercel with `vercel.json`, including SPA rewrites for direct navigation to dashboard routes. Import the repository into Vercel, keep the default Vite settings, and deploy.
 
-## Portfolio note
-
-The current authentication and data storage are intentionally client-side for this portfolio demo. A production version should replace them with a backend or managed service such as Supabase, Firebase, Auth0, or a custom API with secure server-side sessions.
-
 ## Resume-ready description
 
 **Finance Tracking | React, Vite, Tailwind CSS, Chart.js**
 
-Built a responsive personal finance dashboard with protected routing, transaction CRUD workflows, monthly budget tracking, recurring transactions, chart date filters, overspending alerts, multi-currency formatting, CSV export, JSON backup/restore, dark mode, and mobile navigation. Persisted user preferences and finance data locally and designed the UI for both desktop and mobile use.
+Built a responsive personal finance dashboard with Supabase authentication, per-user PostgreSQL data, protected routing, transaction CRUD workflows, monthly budget tracking, recurring transactions, chart date filters, overspending alerts, multi-currency formatting, CSV export, JSON backup/restore, dark mode, and mobile navigation.
 
 ## Strong next upgrades
 
-- Replace local authentication with Supabase Auth or Firebase Auth
-- Move finance data to a database with per-user authorization rules
 - Add automated tests with Vitest and React Testing Library
 - Add end-to-end tests for login, CRUD, backup, and protected routing
 - Add a CI workflow that runs lint, tests, and build on every pull request

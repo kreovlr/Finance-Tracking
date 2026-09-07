@@ -40,10 +40,10 @@ useEffect(() => {
 
 
 
-function handleLogin(e){
+async function handleLogin(e){
 
 e.preventDefault();
-const validationError = login(form.email, form.password);
+const validationError = await login(form.email, form.password);
 setError(validationError || "");
 if (!validationError) {
 	navigate(location.state?.from || "/dashboard", { replace: true });

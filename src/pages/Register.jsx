@@ -28,10 +28,10 @@ useEffect(() => {
 
 
 
-function handleRegister(e){
+async function handleRegister(e){
 
 e.preventDefault();
-const validationError = register(form.name, form.email, form.password);
+const validationError = await register(form.name, form.email, form.password);
 setError(validationError || "");
 if (!validationError) navigate("/dashboard", { replace: true });
 

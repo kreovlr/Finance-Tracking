@@ -1,5 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "./AuthContext";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 const FinanceContext = createContext(null);
 
@@ -20,31 +22,80 @@ function readStorage(key, fallback) {
 }
 
 export function FinanceProvider({ children }) {
-  const [transactions, setTransactions] = useState(() => readStorage("fintrack-transactions", defaultTransactions));
-  const [budgets, setBudgets] = useState(() => readStorage("fintrack-budgets", defaultBudgets));
+  const { user, loading: authLoading } = useAuth();
+  const [transactions, setTransactions] = useState(() => isSupabaseConfigured ? [] : readStorage("fintrack-transactions", defaultTransactions));
+  const [budgets, setBudgets] = useState(() => isSupabaseConfigured ? [] : readStorage("fintrack-budgets", defaultBudgets));
   const [currency, setCurrency] = useState(() => window.localStorage.getItem("fintrack-currency") || "PHP");
+  const [dataLoading, setDataLoading] = useState(isSupabaseConfigured);
 
-  useEffect(() => window.localStorage.setItem("fintrack-transactions", JSON.stringify(transactions)), [transactions]);
-  useEffect(() => window.localStorage.setItem("fintrack-budgets", JSON.stringify(budgets)), [budgets]);
-  useEffect(() => window.localStorage.setItem("fintrack-currency", currency), [currency]);
+  useEffect(() => {
+    if (authLoading) return undefined;
 
-  function addTransaction(data) {
-    setTransactions((current) => [...current, { ...data, id: Date.now(), amount: Number(data.amount) }]);
+    if (!isSupabaseConfigured || !user) {
+      return undefined;
+    }
+
+    let mounted = true;
+    Promise.all([
+      supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false }),
+      supabase.from("budgets").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
+      supabase.from("profiles").select("currency").eq("id", user.id).maybeSingle()
+    ]).then(([transactionResult, budgetResult, profileResult]) => {
+      if (!mounted) return;
+      if (!transactionResult.error) setTransactions(transactionResult.data || []);
+      if (!budgetResult.error) setBudgets(budgetResult.data || []);
+      if (!profileResult.error && profileResult.data?.currency) setCurrency(profileResult.data.currency);
+      setDataLoading(false);
+    });
+
+    return () => { mounted = false; };
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user) {
+      window.localStorage.setItem("fintrack-transactions", JSON.stringify(transactions));
+      window.localStorage.setItem("fintrack-budgets", JSON.stringify(budgets));
+      window.localStorage.setItem("fintrack-currency", currency);
+    }
+  }, [transactions, budgets, currency, user]);
+
+  async function addTransaction(data) {
+    const transaction = { ...data, amount: Number(data.amount) };
+    if (isSupabaseConfigured && user) {
+      const { data: saved, error } = await supabase.from("transactions").insert({ ...transaction, user_id: user.id }).select().single();
+      if (!error) setTransactions((current) => [...current, saved]);
+      return;
+    }
+    setTransactions((current) => [...current, { ...transaction, id: Date.now() }]);
   }
 
-  function updateTransaction(id, data) {
-    setTransactions((current) => current.map((item) => item.id === id ? { ...item, ...data, amount: Number(data.amount) } : item));
+  async function updateTransaction(id, data) {
+    const transaction = { ...data, amount: Number(data.amount) };
+    if (isSupabaseConfigured && user) {
+      const { data: updated, error } = await supabase.from("transactions").update(transaction).eq("id", id).eq("user_id", user.id).select().single();
+      if (!error) setTransactions((current) => current.map((item) => item.id === id ? updated : item));
+      return;
+    }
+    setTransactions((current) => current.map((item) => item.id === id ? { ...item, ...transaction } : item));
   }
 
-  function deleteTransaction(id) {
+  async function deleteTransaction(id) {
+    if (isSupabaseConfigured && user) await supabase.from("transactions").delete().eq("id", id).eq("user_id", user.id);
     setTransactions((current) => current.filter((item) => item.id !== id));
   }
 
-  function addBudget(data) {
-    setBudgets((current) => [...current, { ...data, id: Date.now(), amount: Number(data.amount) }]);
+  async function addBudget(data) {
+    const budget = { ...data, amount: Number(data.amount) };
+    if (isSupabaseConfigured && user) {
+      const { data: saved, error } = await supabase.from("budgets").insert({ ...budget, user_id: user.id }).select().single();
+      if (!error) setBudgets((current) => [...current, saved]);
+      return;
+    }
+    setBudgets((current) => [...current, { ...budget, id: Date.now() }]);
   }
 
-  function deleteBudget(id) {
+  async function deleteBudget(id) {
+    if (isSupabaseConfigured && user) await supabase.from("budgets").delete().eq("id", id).eq("user_id", user.id);
     setBudgets((current) => current.filter((item) => item.id !== id));
   }
 
@@ -53,6 +104,12 @@ export function FinanceProvider({ children }) {
     if (Array.isArray(data.budgets)) setBudgets(data.budgets);
     if (data.currency) setCurrency(data.currency);
   }
+
+  useEffect(() => {
+    if (isSupabaseConfigured && user && !dataLoading) {
+      supabase.from("profiles").upsert({ id: user.id, currency }).then();
+    }
+  }, [currency, dataLoading, user]);
 
   const income = useMemo(() => transactions.filter((item) => item.type === "income").reduce((total, item) => total + Number(item.amount), 0), [transactions]);
   const expenses = useMemo(() => transactions.filter((item) => item.type === "expense").reduce((total, item) => total + Number(item.amount), 0), [transactions]);
