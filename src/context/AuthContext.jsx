@@ -93,8 +93,22 @@ export function AuthProvider({ children }) {
     if (supabase) await supabase.auth.signOut();
   }
 
+  async function resetPassword(email) {
+    if (!isSupabaseConfigured) {
+      return "Supabase is not configured yet. Add the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.";
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) return "Enter your email first and we will send reset instructions.";
+
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${window.location.origin}/login`
+    });
+    return error?.message || null;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

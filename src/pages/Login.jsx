@@ -29,7 +29,7 @@ function Login(){
 const navigate = useNavigate();
 const location = useLocation();
 const { dark, toggleTheme } = useTheme();
-const { user, login } = useAuth();
+const { user, login, resetPassword } = useAuth();
 const [form, setForm] = useState({ email: "", password: "" });
 const [error, setError] = useState("");
 const [resetSent, setResetSent] = useState(false);
@@ -51,13 +51,14 @@ if (!validationError) {
 
 }
 
-function handleReset() {
+async function handleReset() {
 	if (!form.email) {
 		setError("Enter your email first and we will send reset instructions.");
 		return;
 	}
-	setError("");
-	setResetSent(true);
+	const resetError = await resetPassword(form.email);
+	setError(resetError || "");
+	setResetSent(!resetError);
 }
 
 
