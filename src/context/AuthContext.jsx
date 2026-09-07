@@ -25,15 +25,18 @@ export function AuthProvider({ children }) {
     let mounted = true;
     const recoveryCode = new URLSearchParams(window.location.search).get("code");
     const restoreSession = async () => {
-      if (recoveryCode) {
-        await supabase.auth.exchangeCodeForSession(recoveryCode);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+      try {
+        if (recoveryCode) {
+          const { error } = await supabase.auth.exchangeCodeForSession(recoveryCode);
+          if (!error) window.history.replaceState({}, document.title, window.location.pathname);
+        }
 
-      const { data } = await supabase.auth.getSession();
-      if (mounted) {
-        setUser(getUserFromSession(data.session));
-        setLoading(false);
+        const { data } = await supabase.auth.getSession();
+        if (mounted) setUser(getUserFromSession(data.session));
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
     restoreSession();
@@ -64,9 +67,13 @@ export function AuthProvider({ children }) {
       password
     });
     if (error) {
-      return error.message === "Invalid login credentials"
-        ? "No matching account found. Register first or check your details."
-        : error.message;
+      if (error.message === "Invalid login credentials") {
+        return "No matching Supabase account found. If you registered before Supabase was added, register again with this email.";
+      }
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        return "Confirm your email address first, then try logging in again.";
+      }
+      return error.message;
     }
     return null;
   }
@@ -122,7 +129,8 @@ export function AuthProvider({ children }) {
     if (!sessionData.session) {
       const recoveryCode = new URLSearchParams(window.location.search).get("code");
       if (recoveryCode) {
-        await supabase.auth.exchangeCodeForSession(recoveryCode);
+        const { error } = await supabase.auth.exchangeCodeForSession(recoveryCode);
+        if (error) return "This password-reset link is expired or has already been used. Request a new reset email.";
         ({ data: sessionData } = await supabase.auth.getSession());
       }
     }

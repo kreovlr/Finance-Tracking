@@ -18,7 +18,13 @@ const defaultBudgets = [
 
 function readStorage(key, fallback) {
   const stored = window.localStorage.getItem(key);
-  return stored ? JSON.parse(stored) : fallback;
+  if (!stored) return fallback;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    window.localStorage.removeItem(key);
+    return fallback;
+  }
 }
 
 export function FinanceProvider({ children }) {
@@ -26,7 +32,7 @@ export function FinanceProvider({ children }) {
   const [transactions, setTransactions] = useState(() => isSupabaseConfigured ? [] : readStorage("fintrack-transactions", defaultTransactions));
   const [budgets, setBudgets] = useState(() => isSupabaseConfigured ? [] : readStorage("fintrack-budgets", defaultBudgets));
   const [currency, setCurrency] = useState(() => window.localStorage.getItem("fintrack-currency") || "PHP");
-  const [dataLoading, setDataLoading] = useState(isSupabaseConfigured);
+  const [loadedUserId, setLoadedUserId] = useState(null);
 
   useEffect(() => {
     if (authLoading) return undefined;
@@ -45,7 +51,7 @@ export function FinanceProvider({ children }) {
       if (!transactionResult.error) setTransactions(transactionResult.data || []);
       if (!budgetResult.error) setBudgets(budgetResult.data || []);
       if (!profileResult.error && profileResult.data?.currency) setCurrency(profileResult.data.currency);
-      setDataLoading(false);
+      setLoadedUserId(user.id);
     });
 
     return () => { mounted = false; };
@@ -106,10 +112,10 @@ export function FinanceProvider({ children }) {
   }
 
   useEffect(() => {
-    if (isSupabaseConfigured && user && !dataLoading) {
+    if (isSupabaseConfigured && user && loadedUserId === user.id) {
       supabase.from("profiles").upsert({ id: user.id, currency }).then();
     }
-  }, [currency, dataLoading, user]);
+  }, [currency, loadedUserId, user]);
 
   const income = useMemo(() => transactions.filter((item) => item.type === "income").reduce((total, item) => total + Number(item.amount), 0), [transactions]);
   const expenses = useMemo(() => transactions.filter((item) => item.type === "expense").reduce((total, item) => total + Number(item.amount), 0), [transactions]);
