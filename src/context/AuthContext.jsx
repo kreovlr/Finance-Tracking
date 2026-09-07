@@ -132,7 +132,10 @@ export function AuthProvider({ children }) {
     }
 
     const { error } = await supabase.auth.updateUser({ password });
-    if (!error) return null;
+    if (!error) {
+      await supabase.auth.signOut();
+      return null;
+    }
 
     const errorMessage = error.message.toLowerCase();
     if (errorMessage.includes("same") || errorMessage.includes("different") || errorMessage.includes("old password")) {
