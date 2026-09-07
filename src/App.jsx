@@ -18,6 +18,7 @@ import Budgets from "./pages/Budgets";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import UpdatePassword from "./pages/UpdatePassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 
@@ -134,6 +135,8 @@ function App(){
           element={<Register />}
 
         />
+
+        <Route path="/update-password" element={<UpdatePassword />} />
 
 
 

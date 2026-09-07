@@ -102,13 +102,19 @@ export function AuthProvider({ children }) {
     if (!normalizedEmail) return "Enter your email first and we will send reset instructions.";
 
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${window.location.origin}/login`
+      redirectTo: `${window.location.origin}/update-password`
     });
     return error?.message || null;
   }
 
+  async function updatePassword(password) {
+    if (!supabase) return "Supabase is not configured yet.";
+    const { error } = await supabase.auth.updateUser({ password });
+    return error?.message || null;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, resetPassword }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, resetPassword, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );
