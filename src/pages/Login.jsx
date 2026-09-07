@@ -14,7 +14,8 @@ from "framer-motion";
 import {
 	ArrowRight,
 	Moon,
-	Sun
+	Sun,
+	WalletCards
 } from "lucide-react";
 import {
 	useTheme
@@ -147,6 +148,11 @@ dark:shadow-black/30
 
 >
 
+<div className="brand-lockup" aria-label="Finance Tracking logo">
+	<div className="brand-mark"><WalletCards size={27} strokeWidth={2.2} /></div>
+	<span className="brand-kicker">Finance Tracking</span>
+</div>
+
 
 <h1
 
@@ -163,7 +169,7 @@ text-transparent
 
 >
 
-Finance Tracking
+Welcome back
 
 </h1>
 
