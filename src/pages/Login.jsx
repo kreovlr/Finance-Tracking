@@ -34,6 +34,7 @@ const { user, login, resetPassword } = useAuth();
 const [form, setForm] = useState({ email: "", password: "" });
 const [error, setError] = useState("");
 const [resetSent, setResetSent] = useState(false);
+const [hasLoggedInBefore, setHasLoggedInBefore] = useState(() => localStorage.getItem("finance-tracking-has-logged-in") === "true");
 
 useEffect(() => {
 	if (user) navigate("/dashboard", { replace: true });
@@ -47,6 +48,8 @@ e.preventDefault();
 const validationError = await login(form.email, form.password);
 setError(validationError || "");
 if (!validationError) {
+	localStorage.setItem("finance-tracking-has-logged-in", "true");
+	setHasLoggedInBefore(true);
 	navigate(location.state?.from || "/dashboard", { replace: true });
 }
 
@@ -169,7 +172,7 @@ text-transparent
 
 >
 
-Welcome back
+{hasLoggedInBefore ? "Welcome back" : "Get started with Finance Tracking"}
 
 </h1>
 
